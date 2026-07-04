@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Phone, Lock, User as UserIcon, Shield, Loader2, AlertCircle, CheckCircle2, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { User } from '../types';
 import { useCMS } from '../CMSContext';
-import { getApiUrl } from '../lib/api';
+import { useAuth } from '../hooks/useAuth';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -18,6 +18,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialMode = 'login' 
 }) => {
   const { settings, submitPasswordReset } = useCMS();
+  const { login, register, loading, error: hookError, setError: setHookError } = useAuth();
+  
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>(initialMode);
   
   // Login fields
@@ -42,11 +44,59 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Status and response handling
-  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
   if (!isOpen) return null;
+
+  // Local login action - using useAuth hook
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    if (!loginPhone.trim() || !loginPassword) {
+      setErrorMsg('يرجى ملء جميع الحقول المطلوبة للمتابعة.');
+      return;
+    }
+
+    const result = await login({
+      phone: loginPhone.trim(),
+      password: loginPassword,
+    });
+
+    if (result) {
+      if (result.success) {
+        localStorage.setItem('sugar_current_user', JSON.stringify(result.user));
+        setSuccessMsg('تم تسجيل الدخول بنجاح! أهلاً بك في حسابك الموثق.');
+        setTimeout(() => {
+          onAuthSuccess(result.user);
+          onClose();
+          setLoginPhone('');
+          setLoginPassword('');
+        }, 1200);
+      } else if (result.pending) {
+        setErrorMsg((
+          <div className="flex flex-col gap-2 p-2 bg-[#0E0E0E] rounded-xl border border-neutral-800 text-[11px]">
+            <span className="text-yellow-400 font-bold">⚠️ عذراً يا شريكنا الكريم؛ حسابك قيد التدقيق الإداري حالياً ولم يتم اعتماده.</span>
+            <span>يرجى التواصل مع مسؤول القطاع لتفعيل حسابك بالرقم القومي لمشاهدة إحصائيات وعقود المحافظات.</span>
+            <a 
+              href={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`أهلاً إدارة شوجر بيزنس، قمت بإنشاء حساب بالرقم: ${loginPhone}`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline inline-flex items-center justify-center gap-1.5 text-emerald-400 font-extrabold hover:text-emerald-300 transition-colors mt-1 py-1 px-3 bg-emerald-500/10 rounded"
+            >
+              تواصل مباشرة بالمدير الإداري لاعتماد الحساب فورا
+            </a>
+          </div>
+        ) as any);
+      } else {
+        setErrorMsg(result.message || 'فشل تسجيل الدخول');
+      }
+    } else {
+      setErrorMsg(hookError || 'حدث خطأ في الاتصال بالخادم');
+    }
+  };
 
   // Local signup action
   const handleRegisterSubmit = async (e: React.FormEvent) => {
@@ -80,60 +130,50 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    setLoading(true);
+    const result = await register({
+      name: regName,
+      phone: regPhone,
+      nationalId: regNationalId,
+      password: regPassword,
+      identificationCode: regIdentificationCode,
+    });
 
-    try {
-      const res = await fetch(getApiUrl('/api/users/register'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: regPhone.trim(),
-          name: regName.trim(),
-          nationalId: regNationalId.trim(),
-          password: regPassword,
-          identificationCode: regIdentificationCode.trim()
-        })
-      });
-
-      const data = await res.json();
-      
-      if (res.ok && data.success) {
-        if (data.pending) {
-          setSuccessMsg(data.message);
+    if (result) {
+      if (result.success) {
+        if (result.pending) {
+          setSuccessMsg(result.message);
           setErrorMsg((
             <div className="flex flex-col gap-2 p-2 bg-[#0E0E0E] rounded-xl border border-neutral-800 text-[11px]">
               <span className="text-yellow-400 font-bold">⚠️ الحساب قيد التدقيق الإداري حالياً:</span>
               <div className="bg-indigo-500/10 border border-indigo-500/20 p-2 rounded-lg text-white mb-1">
                 <span className="block text-indigo-400 font-black mb-1">كود الدخول الموحد الخاص بك:</span>
-                <span className="text-sm font-mono tracking-widest">{data.user.identificationCode}</span>
+                <span className="text-sm font-mono tracking-widest">{result.user?.identificationCode}</span>
               </div>
               <span>يمكنك استخدام هذا الكود أو رقم هاتفك للدخول فور اعتماد الحساب.</span>
               <a 
-                href={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`أهلاً إدارة شوجر بيزنس، يرجى تفعيل حسابي المعتمد بالرقم القومي للمسجل: ${regName} وهاتف: ${regPhone} وكود: ${data.user.identificationCode}`)}`}
+                href={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`أهلاً إدارة شوجر بيزنس، يرجى تفعيل حسابي بالرقم: ${regPhone}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="underline inline-flex items-center justify-center gap-1.5 text-emerald-400 font-extrabold hover:text-emerald-300 transition-colors mt-1 py-1 px-3 bg-emerald-500/10 rounded border border-emerald-500/20"
+                className="underline inline-flex items-center justify-center gap-1.5 text-emerald-400 font-extrabold hover:text-emerald-300 transition-colors mt-1 py-1 px-3 bg-emerald-500/10 rounded"
               >
                 تواصل مباشر عبر الواتساب للتفعيل فورا
               </a>
             </div>
           ) as any);
         } else {
-          // Automatic login for master seed admin
-          localStorage.setItem('sugar_current_user', JSON.stringify(data.user));
+          // Automatic login for approved account
+          localStorage.setItem('sugar_current_user', JSON.stringify(result.user));
           setSuccessMsg('تم تعيينك مديراً للنظام! جاري تسجيل الدخول فورا...');
           setTimeout(() => {
-            onAuthSuccess(data.user);
+            onAuthSuccess(result.user);
             onClose();
           }, 1500);
         }
       } else {
-        setErrorMsg(data.message || 'فشلت عملية إنشاء الحساب، يرجى التثبت من صحة البيانات.');
+        setErrorMsg(result.message || 'فشلت عملية إنشاء الحساب');
       }
-    } catch (err) {
-      setErrorMsg('حدث خطأ فني أثناء الاتصال بالخادم. يرجى إعادة المحاولة.');
-    } finally {
-      setLoading(false);
+    } else {
+      setErrorMsg(hookError || 'حدث خطأ في الاتصال بالخادم');
     }
   };
 
@@ -147,7 +187,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
-    setLoading(true);
     const success = await submitPasswordReset({
       phone: forgotPhone.trim(),
       name: forgotName.trim(),
@@ -162,66 +201,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setTimeout(() => setMode('login'), 3000);
     } else {
       setErrorMsg('فشل إرسال الطلب. يرجى التأكد من صحة البيانات المسجلة مسبقاً.');
-    }
-    setLoading(false);
-  };
-
-  // Local login action
-  const handleLoginSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg('');
-    setSuccessMsg('');
-
-    if (!loginPhone.trim() || !loginPassword) {
-      setErrorMsg('يرجى ملء جميع الحقول المطلوبة للمتابعة.');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const res = await fetch(getApiUrl('/api/users/login'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phone: loginPhone.trim(),
-          password: loginPassword
-        })
-      });
-
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        localStorage.setItem('sugar_current_user', JSON.stringify(data.user));
-        setSuccessMsg('تم تسجيل الدخول بنجاح! أهلاً بك في حسابك الموثق.');
-        setTimeout(() => {
-          onAuthSuccess(data.user);
-          onClose();
-          setLoginPhone('');
-          setLoginPassword('');
-        }, 1200);
-      } else if (data.pending) {
-        setErrorMsg((
-          <div className="flex flex-col gap-2 p-2 bg-[#0E0E0E] rounded-xl border border-neutral-800 text-[11px]">
-            <span className="text-yellow-400 font-bold">⚠️ عذراً يا شريكنا الكريم؛ حسابك قيد التدقيق الإداري حالياً ولم يتم اعتماده بعد:</span>
-            <span>يرجى التواصل مع مسؤول القطاع لتفعيل حسابك بالرقم القومي لمشاهدة إحصائيات وعقود المحافظات.</span>
-            <a 
-              href={`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(`أهلاً إدارة شوجر بيزنس، قمت بإنشاء حساب بالرقم: ${loginPhone} وهي قيد المراجعة؛ أرجو اعتمادها وتحديد المحافظات المصرحة لي بمصر.`)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline inline-flex items-center justify-center gap-1.5 text-emerald-400 font-extrabold hover:text-emerald-300 transition-colors mt-1 py-1 px-3 bg-emerald-500/10 rounded border border-emerald-500/20"
-            >
-              تواصل مباشرة بالمدير الإداري لاعتماد الحساب فورا
-            </a>
-          </div>
-        ) as any);
-      } else {
-        setErrorMsg(data.message || 'بيانات الدخول غير صحيحة. يرجى إعادة المحاولة.');
-      }
-    } catch (err) {
-      setErrorMsg('حدث خطأ فني أثناء الاتصال بالخادم الرئيسي لإجراء فحص الأمان.');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -238,7 +217,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
       {/* Auth Card Content */}
       <div 
-        className="bg-[#0A0A0A] border border-neutral-800 rounded-3xl max-w-md w-full overflow-hidden shadow-[0_0_50px_rgba(99,102,241,0.2)] relative z-10 transform scale-100 transition-all flex flex-col text-right animate-in fade-in zoom-in-95 duration-200"
+        className="bg-[#0A0A0A] border border-neutral-800 rounded-3xl max-w-md w-full overflow-hidden shadow-[0_0_50px_rgba(99,102,241,0.2)] relative z-10 transform scale-100 transition-all flex flex-col"
         dir="rtl"
       >
         {/* Header background flare gradient */}
@@ -266,7 +245,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <div className="text-xs text-neutral-400 bg-[#0E0E0E] border border-neutral-850 p-3 rounded-xl flex items-start gap-2">
             <Shield className="w-4.5 h-4.5 text-indigo-400 shrink-0 mt-0.5" />
             <p className="leading-relaxed">
-              جميع تعاملاتك ومشاهدات المحفظة والخصومات محاطة بميثاق الجودة التشغيلية المعتمد لعام 2026 وحفظ السرية وفقاً للنظام المصري.
+              جميع تعاملاتك ومشاهدات المحفظة والخصومات محاطة بميثاق الجودة التشغيلية المعتمد لعام 2026 وحفظ السرية.
             </p>
           </div>
 
@@ -374,13 +353,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
               </div>
 
-              {/* Master Test Credentials Hint Removed */}
-
-
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-black shadow-lg shadow-indigo-500/10 hover:opacity-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full mt-2 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-black shadow-lg shadow-indigo-500/10 hover:opacity-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -394,7 +370,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </form>
           ) : mode === 'register' ? (
             /* --- CREATE ACCOUNT / REGISTER FORM --- */
-            <form onSubmit={handleRegisterSubmit} className="space-y-4 text-right">
+            <form onSubmit={handleRegisterSubmit} className="space-y-4 text-right max-h-[70vh] overflow-y-auto">
               
               <div className="space-y-1.5">
                 <label className="text-xs font-black text-neutral-300 block">الاسم بالكامل (ثلاثي كما بالبطاقة)</label>
@@ -445,11 +421,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="14 رقماً مصرياً صحيحاً"
                     value={regNationalId}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, ''); // keep numbers only
+                      const val = e.target.value.replace(/\D/g, '');
                       if (val.length <= 14) setRegNationalId(val);
                     }}
                     disabled={loading}
-                    className="w-full text-xs text-right pr-10 pl-4 py-3 bg-neutral-950/75 border border-neutral-800 rounded-xl focus:border-indigo-500 text-white outline-none font-medium font-mono transition-all"
+                    className="w-full text-xs text-right pr-10 pl-4 py-3 bg-neutral-950/75 border border-neutral-800 rounded-xl focus:border-indigo-500 text-white outline-none font-medium font-mono"
                   />
                 </div>
                 <p className="text-[10px] text-neutral-500">سيتم استخدام أرقام البطاقة لمطابقة ملكية وثيقة واستحقاقات الأرباح.</p>
@@ -524,7 +500,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-black shadow-lg shadow-indigo-500/10 hover:opacity-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full mt-2 py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-black shadow-lg shadow-indigo-500/10 hover:opacity-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {loading ? (
                   <>
@@ -588,11 +564,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     placeholder="الرقم القومي الصحيح"
                     value={forgotNationalId}
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, ''); 
+                      const val = e.target.value.replace(/\D/g, '');
                       if (val.length <= 14) setForgotNationalId(val);
                     }}
                     disabled={loading}
-                    className="w-full text-xs text-right pr-10 pl-4 py-3 bg-neutral-950/75 border border-neutral-800 rounded-xl focus:border-indigo-500 text-white outline-none font-medium font-mono transition-all"
+                    className="w-full text-xs text-right pr-10 pl-4 py-3 bg-neutral-950/75 border border-neutral-800 rounded-xl focus:border-indigo-500 text-white outline-none font-medium font-mono"
                   />
                 </div>
               </div>
@@ -601,7 +577,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <button 
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-black shadow-lg shadow-indigo-500/10 hover:opacity-95 transition-all text-center flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-black shadow-lg shadow-indigo-500/10 hover:opacity-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
