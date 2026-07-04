@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Remix: Remix: Sugar Business EG",
+  "description": "تطبيق شوجر بيزنس إي جي - وجهتك الاستثمارية الآمنة لتحقيق عوائد سنوية مضمونة",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

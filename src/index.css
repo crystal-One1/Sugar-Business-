@@ -1,0 +1,265 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Cairo", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+/* Custom styles etc. */
+html, body {
+  font-family: var(--font-sans);
+  direction: rtl;
+  scroll-behavior: smooth;
+  background-color: #0A0A0A;
+  color: #E5E5E5;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+/* HIGH-CONTRAST LIGHT MODE */
+html.light-theme,
+html.light-theme body {
+  background-color: #FFFFFF !important;
+  color: #111111 !important;
+}
+
+/* Override background colors of sections & blocks */
+.light-theme .bg-\[\#0A0A0A\] {
+  background-color: #FFFFFF !important;
+}
+.light-theme .bg-\[\#0F0F0F\] {
+  background-color: #F8FAFC !important; /* soft Slate-50 for perfect elegant contrast */
+}
+.light-theme .bg-\[\#070707\] {
+  background-color: #F1F5F9 !important; /* Slate-100 */
+}
+.light-theme .bg-\[\#050505\] {
+  background-color: #E2E8F0 !important; /* Slate-200 */
+}
+
+/* Background opacity variations */
+.light-theme .bg-\[\#0F0F0F\]\/90 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+.light-theme .bg-\[\#0F0F0F\]\/95 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+.light-theme .bg-\[\#0F0F0F\]\/65 {
+  background-color: rgba(248, 250, 252, 0.8) !important;
+}
+.light-theme .bg-\[\#0F0F0F\]\/55 {
+  background-color: rgba(248, 250, 252, 0.7) !important;
+}
+.light-theme .bg-\[\#0A0A0A\]\/50 {
+  background-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Overriding Text Colors for High Contrast */
+.light-theme .text-white {
+  color: #0F172A !important; /* Slate-900 */
+}
+.light-theme .text-neutral-100 {
+  color: #0F172A !important;
+}
+.light-theme .text-neutral-200 {
+  color: #1E293B !important; /* Slate-800 */
+}
+.light-theme .text-neutral-300 {
+  color: #334155 !important; /* Slate-700 */
+}
+.light-theme .text-neutral-400 {
+  color: #475569 !important; /* Slate-600 */
+}
+.light-theme .text-neutral-500 {
+  color: #64748B !important; /* Slate-500 */
+}
+
+/* Make blockquotes highly readable */
+.light-theme blockquote {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+/* Borders */
+.light-theme .border-neutral-800,
+.light-theme .border-neutral-900,
+.light-theme .border-neutral-850 {
+  border-color: #CBD5E1 !important; /* Slate-300 for visible neat outlines */
+}
+
+/* Form Inputs in Light Mode */
+.light-theme input,
+.light-theme select,
+.light-theme textarea {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border-color: #94A3B8 !important; /* clear outstanding input borders (Slate-400) */
+}
+.light-theme input:focus,
+.light-theme select:focus,
+.light-theme textarea:focus {
+  border-color: #4F46E5 !important; /* Indigo-600 focus */
+  background-color: #FFFFFF !important;
+}
+.light-theme input::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* Nav Links hover states */
+.light-theme nav button.text-neutral-300 {
+  color: #334155 !important;
+}
+.light-theme nav button.text-neutral-300:hover {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+}
+
+/* Accent labels and small descriptions */
+.light-theme .text-neutral-450 {
+  color: #334155 !important;
+}
+
+/* Notification banner overrides */
+.light-theme .bg-gradient-to-r.from-indigo-700.to-indigo-850 {
+  background: linear-gradient(to right, #4338CA, #312E81) !important; /* Vibrant high-contrast purple/blue */
+}
+
+/* Contacts Form custom container gradient override */
+.light-theme .bg-gradient-to-tr.from-\[\#0F0F0F\].via-\[\#0A0A0A\].to-\[\#050505\] {
+  background: #FFFFFF !important;
+  border: 1px solid #CBD5E1 !important;
+}
+
+/* Gradient text adjustments */
+.light-theme .bg-gradient-to-r.from-white.to-neutral-300 {
+  background-image: none !important;
+  background-clip: border-box !important;
+  -webkit-background-clip: border-box !important;
+  color: #0F172A !important;
+}
+
+/* Popular package outline accessibility */
+.light-theme .ring-indigo-950\/40 {
+  --tw-ring-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Active FAQ items styles */
+.light-theme .bg-neutral-900\/20 {
+  background-color: #F8FAFC !important;
+}
+.light-theme .bg-neutral-900 {
+  background-color: #F1F5F9 !important;
+}
+
+/* Logo icon SVG dynamic adjustments */
+.light-theme svg.text-neutral-200 {
+  color: #0F172A !important;
+}
+
+/* Active text labels in FAQ and Calculator */
+.light-theme .bg-neutral-905, 
+.light-theme .bg-neutral-900 {
+  background-color: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+}
+
+/* Slider Track styles */
+.light-theme input[type="range"] {
+  background-color: #E2E8F0 !important;
+}
+
+/* LIGHT THEME DESIGN MATCH & CONTRAST SOLUTIONS */
+
+/* Section & container gradients */
+.light-theme .bg-gradient-to-b.from-\[\#0F0F0F\].via-\[\#0A0A0A\].to-\[\#0F0F0F\] {
+  background: linear-gradient(to bottom, #F8FAFC, #FFFFFF, #F1F5F9) !important;
+}
+
+.light-theme .bg-gradient-to-br.from-\[\#0F0F0F\].via-\[\#050505\].to-\[\#0A0A0A\] {
+  background: linear-gradient(to bottom right, #FFFFFF, #F8FAFC, #F1F5F9) !important;
+  color: #0F172A !important;
+}
+
+.light-theme .bg-gradient-to-r.from-\[\#0A0A0A\].to-\[\#0F0F0F\] {
+  background: linear-gradient(to right, #F8FAFC, #FFFFFF) !important;
+}
+
+/* Interactive illustration gradients */
+.light-theme .from-indigo-500.to-purple-600 {
+  background-image: linear-gradient(to top right, #25C1F2, #4F46E5) !important;
+}
+
+.light-theme .text-teal-400 {
+  color: #0D9488 !important;
+}
+
+/* Translucent components/badge backgrounds */
+.light-theme .bg-\[\#0F0F0F\]\/90 {
+  background-color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.light-theme .bg-\[\#0F0F0F\]\/55 {
+  background-color: rgba(248, 250, 252, 0.45) !important;
+}
+
+.light-theme .bg-\[\#0F0F0F\]\/65 {
+  background-color: rgba(255, 255, 255, 0.50) !important;
+}
+
+.light-theme .text-transparent {
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  color: #4F46E5 !important; /* Elegant high-contrast deep indigo in light mode */
+}
+
+.light-theme .bg-clip-text.text-transparent {
+  background-image: none !important;
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  color: #4F46E5 !important;
+}
+
+/* Soft grid pattern stroke in light theme */
+.light-theme pattern path {
+  stroke: #E2E8F0 !important;
+}
+
+/* ACCENT BRAND COLOR FOR LOGO MATCH */
+.text-logo-color {
+  color: #25C1F2 !important;
+}
+
+/* BLURRY AND GLASSMORPHISM BACKGROUND SPECIFICS */
+.backdrop-blur-sm {
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+.backdrop-blur-md {
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+.backdrop-blur-lg, .backdrop-blur-xl {
+  backdrop-filter: blur(32px) !important;
+  -webkit-backdrop-filter: blur(32px) !important;
+}
+
+/* Back background blur orbs multiplier and optimization */
+.bg-indigo-900\/20,
+.bg-purple-900\/20,
+.bg-indigo-900\/10,
+.bg-indigo-500\/5,
+.bg-purple-500\/5 {
+  filter: blur(140px) !important;
+  opacity: 0.9 !important;
+}
+
+/* Glowing orbs color overrides in light theme to look elegant and bright */
+.light-theme .bg-purple-900\/20 {
+  background-color: rgba(147, 197, 253, 0.25) !important; /* Soft blue */
+}
+.light-theme .bg-indigo-900\/20,
+.light-theme .bg-indigo-900\/10,
+.light-theme .bg-indigo-500\/5 {
+  background-color: rgba(199, 210, 254, 0.35) !important; /* Soft indigo-lavender */
+}
+
